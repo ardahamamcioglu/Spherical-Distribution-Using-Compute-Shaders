@@ -1,0 +1,31 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+
+float3x3 Vector3x3(float3 direction, float3 up)
+    {
+        float3 xaxis = normalize(cross(-up, direction));
+
+        float3 yaxis = normalize(cross(direction, xaxis));
+
+        float3 row1 = float3(xaxis.x,yaxis.x,direction.x);
+        float3 row2 = float3(xaxis.y,yaxis.y,direction.y);
+        float3 row3 = float3(xaxis.z,yaxis.z,direction.z);
+
+        return float3x3(row1, row2, row3);
+    }
+
+int pointCount;
+float distribution;
+float bias;
+float3 direction;
+RWStructuredBuffer<float3> Result;
+
+[numthreads(8,1,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    float ind = id.x + 0.5;
+    float phi = acos(1 - 2 * distribution * ind / pointCount) + bias * ind / pointCount;
+    float theta = 3.1415 * (1 + sqrt(5)) * ind;
+    
+    Result[id.x] = mul(float3(cos(theta) * sin(phi), sin(theta) * sin(phi),cos(phi)),Vector3x3(normalize(direction),float3(0,1,0)));
+}
